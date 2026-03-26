@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Orders Shop</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f5f5f5;
+    margin: 0;
+}
+
+.header {
+    background: #222;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 20px;
+}
+
+.container {
+    padding: 20px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add { background: #4CAF50; color: white; }
+.delete { background: #f44336; color: white; }
+</style>
+</head>
+
+<body>
+
+<div class="header">🛒 Orders Dashboard</div>
+
+<div class="container">
+
+<button class="add" onclick="addOrder()">+ New Order</button>
+
+<div id="orders"></div>
+
+</div>
+
+<script>
+const client = window.supabase.createClient("https://plyxbiudxzduwfdabxyz.supabase.co", "sb_publishable_4dWaBP3iybskFQ1jPHCgIg_SG07E4RC");
+
+async function loadOrders() {
+    const { data, error } = await client
+        .from('Order TBL')
+        .select(`
+            "Order_ID",
+            "Loyalty_Points",
+            "Order Status TBL"!Order_Status_ID ("Order_Status"),
+            "Producer TBL"!Producer_ID ("Producer")
+        `)
+        .order('"Order_ID"', { ascending: false });
+
+    console.log("DATA:", data);
+    console.log("ERROR:", error);
+
+    const container = document.getElementById("orders");
+    container.innerHTML = "";
+
+    if (!data) return;
+
+    data.forEach(o => {
+        container.innerHTML += `
+        <div class="card">
+            <h3>Order #${o.Order_ID}</h3>
+            <p>Points: ${o.Loyalty_Points}</p>
+            <p>Status: ${o["Order Status TBL"]?.Order_Status}</p>
+            <p>Producer: ${o["Producer TBL"]?.Producer}</p>
+        </div>
+        `;
+    });
+}
+
+// 🔹 ADD ORDER (backend decides FK)
+async function addOrder() {
+
+    // 🔥 Hardcoded defaults (simulate backend logic)
+    const { error } = await client
+        .from('Order TBL')
+        .insert([
+            {
+            "Loyalty_Points": 50,
+            "Order_Status_ID": 1,
+            "Producer_ID": 1
+            }
+        ]);
+
+    console.log(error);
+
+    loadOrders();
+}
+
+// 🔹 DELETE
+async function deleteOrder(id) {
+    await client
+        .from('Order TBL')
+        .delete()
+        .eq('Order TBL', id);
+
+    loadOrders();
+}
+
+// INIT
+loadOrders();
+</script>
+
+</body>
+</html>
